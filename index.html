@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLOCKY MATCHING</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Fonts: Be Vietnam Pro, Chakra Petch, Luckiest Guy, Fredoka -->
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&family=Chakra+Petch:wght@700;800;900&family=Fredoka:wght@600;700;800&family=Luckiest+Guy&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .font-title {
+            font-family: 'Luckiest Guy', 'Fredoka', 'Chakra Petch', cursive, sans-serif;
+            letter-spacing: 1.5px;
+        }
+
+        .bg-sky-world {
+            background: linear-gradient(180deg, #1E40AF 0%, #3B82F6 40%, #10B981 100%);
+        }
+
+        .text-stroke-gold {
+            -webkit-text-stroke: 2px #78350F;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+        }
+
+        .text-stroke-blue {
+            -webkit-text-stroke: 1.5px #1E3A8A;
+        }
+
+        .btn-orange-3d {
+            background: linear-gradient(180deg, #FF9800 0%, #F57C00 60%, #E65100 100%);
+            box-shadow: 0 8px 0 #B23C00, 0 12px 18px rgba(0, 0, 0, 0.35);
+            transition: all 0.1s ease;
+        }
+
+        .btn-orange-3d:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #B23C00, 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* DANCING MASCOT ANIMATION */
+        @keyframes dance {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+            25% { transform: translateY(-12px) rotate(-4deg) scale(1.02); }
+            50% { transform: translateY(0) rotate(0deg) scale(0.98); }
+            75% { transform: translateY(-12px) rotate(4deg) scale(1.02); }
+        }
+
+        .animate-dance {
+            animation: dance 1.8s infinite ease-in-out;
+            transform-origin: bottom center;
+        }
+
+        /* AURA RADIANT GLOW ANIMATION */
+        @keyframes aura-pulse {
+            0%, 100% {
+                transform: scale(0.96);
+                opacity: 0.85;
+                filter: blur(12px) brightness(1.1);
+            }
+            50% {
+                transform: scale(1.12);
+                opacity: 1;
+                filter: blur(18px) brightness(1.35);
+            }
+        }
+
+        .mascot-aura {
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: radial-gradient(circle, 
+                rgba(254, 240, 138, 0.95) 0%, 
+                rgba(251, 191, 36, 0.8) 30%, 
+                rgba(245, 158, 11, 0.5) 55%, 
+                rgba(217, 119, 6, 0.2) 75%, 
+                rgba(0, 0, 0, 0) 100%);
+            animation: aura-pulse 2.8s ease-in-out infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* BACKGROUND SPINNING GEARS & CLOCKS */
+        @keyframes gear-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spin-gear {
+            animation: gear-spin 12s linear infinite;
+        }
+
+        .spin-gear-rev {
+            animation: gear-spin 15s linear infinite reverse;
+        }
+
+        .spin-gear-fast {
+            animation: gear-spin 5s linear infinite;
+        }
+
+        .spin-clock-slow {
+            animation: gear-spin 20s linear infinite;
+        }
+
+        /* Tối ưu chuyển động kim đồng hồ không bị giật */
+        .clock-hand {
+            transition: transform 0.08s ease-out;
+            transform-origin: 100px 100px;
+            will-change: transform;
+        }
+
+        .clock-hand.no-transition {
+            transition: none !important;
+        }
+
+        .modal-overlay {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .match-node {
+            transition: all 0.2s ease;
+        }
+
+        /* LOGO STYLING */
+        .title-drop-shadow {
+            filter: drop-shadow(0px 6px 0px #78350F) drop-shadow(0px 10px 15px rgba(0,0,0,0.5));
+        }
+    </style>
+</head>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen p-0 md:p-4 overflow-hidden">
+
+    <div class="relative w-full max-w-[420px] h-[100vh] md:h-[860px] bg-sky-world md:rounded-[36px] border-0 md:border-8 border-amber-800/40 shadow-2xl overflow-hidden flex flex-col justify-between">
+        
+        <!-- TOP STATS BAR -->
+        <div class="relative z-25 flex justify-between items-center p-4 pt-5">
+            <div class="flex items-center bg-blue-600/90 border-2 border-white rounded-full px-3 py-1 shadow-lg text-white font-bold text-sm">
+                <div class="w-7 h-7 rounded-full bg-amber-400 border border-white text-blue-900 flex items-center justify-center -ml-2 mr-2 font-black shadow">
+                    <span id="display-level">1</span>
+                </div>
+                <span>Level: <span id="display-level-num">1</span></span>
+            </div>
+
+            <!-- Sound Toggle Button -->
+            <button id="btn-sound-toggle" class="bg-amber-500/95 hover:bg-amber-600 border-2 border-white rounded-full w-9 h-9 flex items-center justify-center text-white shadow-lg transition-transform active:scale-95">
+                <i id="sound-icon" class="fa-solid fa-volume-high text-sm"></i>
+            </button>
+        </div>
+
+        <!-- BACKGROUND GEARS & CLOCKS -->
+        <div class="absolute inset-0 z-0 pointer-events-none opacity-20">
+            <i class="fa-solid fa-gear spin-gear absolute -left-12 top-16 text-amber-300 text-8xl"></i>
+            <i class="fa-solid fa-gear spin-gear-rev absolute -right-12 top-48 text-amber-400 text-9xl"></i>
+            <i class="fa-solid fa-gear spin-gear-fast absolute left-10 bottom-36 text-amber-200 text-7xl"></i>
+            <i class="fa-solid fa-gear spin-gear-rev absolute right-8 bottom-16 text-yellow-300 text-8xl"></i>
+
+            <i class="fa-solid fa-clock spin-clock-slow absolute right-6 top-20 text-yellow-100 text-6xl"></i>
+            <i class="fa-regular fa-clock spin-gear-rev absolute left-6 top-80 text-amber-100 text-7xl"></i>
+            <i class="fa-solid fa-clock spin-clock-slow absolute left-12 bottom-12 text-yellow-200 text-5xl"></i>
+            <i class="fa-regular fa-clock spin-gear absolute -right-6 bottom-60 text-amber-300 text-7xl"></i>
+        </div>
+
+        <!-- ==================== HOME SCREEN ==================== -->
+        <div id="screen-home" class="relative z-10 flex-1 flex flex-col items-center justify-between py-5 px-3">
+            
+            <!-- GAME LOGO: CLOCKY MATCHING -->
+            <div class="text-center mt-1 relative w-full flex flex-col items-center">
+                <div class="relative flex flex-col items-center justify-center w-full max-w-[390px] my-1">
+                    <div class="flex items-center justify-center space-x-1.5 title-drop-shadow">
+                        <svg class="w-14 h-14 md:w-16 md:h-16 spin-gear shrink-0" viewBox="0 0 100 100">
+                            <path d="M 50 10 A 40 40 0 1 0 85 75 L 68 63 A 22 22 0 1 1 50 28 Z" fill="#FBBF24" stroke="#78350F" stroke-width="6" stroke-linejoin="round"/>
+                            <circle cx="20" cy="50" r="4" fill="#78350F"/>
+                            <circle cx="50" cy="20" r="4" fill="#78350F"/>
+                            <circle cx="30" cy="75" r="4" fill="#78350F"/>
+                        </svg>
+
+                        <span class="font-title text-5xl md:text-6xl text-amber-400 text-stroke-gold">L</span>
+
+                        <div class="relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 shrink-0">
+                            <svg class="w-full h-full drop-shadow-md" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="45" fill="#F59E0B" stroke="#78350F" stroke-width="7"/>
+                                <circle cx="50" cy="50" r="36" fill="#FEF08A" stroke="#B45309" stroke-width="3"/>
+                                <line x1="50" y1="50" x2="28" y2="30" stroke="#78350F" stroke-width="7" stroke-linecap="round"/>
+                                <line x1="50" y1="50" x2="72" y2="32" stroke="#D97706" stroke-width="6" stroke-linecap="round"/>
+                                <circle cx="50" cy="50" r="6" fill="#78350F"/>
+                                <circle cx="22" cy="18" r="8" fill="#F59E0B" stroke="#78350F" stroke-width="3"/>
+                                <circle cx="78" cy="18" r="8" fill="#F59E0B" stroke="#78350F" stroke-width="3"/>
+                            </svg>
+                        </div>
+
+                        <svg class="w-14 h-14 md:w-16 md:h-16 spin-gear-rev shrink-0" viewBox="0 0 100 100">
+                            <path d="M 50 10 A 40 40 0 1 0 85 75 L 68 63 A 22 22 0 1 1 50 28 Z" fill="#FBBF24" stroke="#78350F" stroke-width="6" stroke-linejoin="round"/>
+                            <circle cx="20" cy="50" r="4" fill="#78350F"/>
+                            <circle cx="50" cy="20" r="4" fill="#78350F"/>
+                            <circle cx="30" cy="75" r="4" fill="#78350F"/>
+                        </svg>
+
+                        <span class="font-title text-5xl md:text-6xl text-amber-400 text-stroke-gold">K</span>
+                        <span class="font-title text-5xl md:text-6xl text-amber-400 text-stroke-gold">Y</span>
+                    </div>
+
+                    <div class="relative flex items-center justify-center mt-2 px-6 py-1">
+                        <div class="absolute inset-0 flex items-center justify-between opacity-85 pointer-events-none">
+                            <i class="fa-solid fa-gear spin-gear text-3xl text-amber-500 drop-shadow-sm -ml-2"></i>
+                            <i class="fa-solid fa-gear spin-gear-fast text-2xl text-yellow-400 drop-shadow-sm"></i>
+                            <i class="fa-solid fa-gear spin-gear-rev text-3xl text-amber-500 drop-shadow-sm -mr-2"></i>
+                        </div>
+
+                        <div class="relative z-10 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-900 border-2 border-amber-200 px-6 py-1 rounded-2xl shadow-xl">
+                            <span class="font-title text-3xl md:text-4xl tracking-widest text-white text-stroke-gold">MATCHING</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-xs text-white font-bold bg-amber-800/80 backdrop-blur-sm px-4 py-1 rounded-full inline-block mt-2 border border-amber-300 shadow-md">
+                    ⚙️ Set Clocks & Master B1 - C2 Vocabulary!
+                </p>
+            </div>
+
+            <!-- DANCING MASCOT WITH RADIANT AURA -->
+            <div class="my-auto flex flex-col items-center justify-center relative w-full">
+                <div class="mascot-aura"></div>
+                <div class="animate-dance relative z-10">
+                    <svg class="w-60 h-60 md:w-64 md:h-64 drop-shadow-2xl" viewBox="0 0 200 220">
+                        <path d="M 70 170 Q 60 195 50 195" fill="none" stroke="#D97706" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M 130 170 Q 140 195 150 195" fill="none" stroke="#D97706" stroke-width="8" stroke-linecap="round"/>
+                        <ellipse cx="45" cy="195" rx="12" ry="6" fill="#B45309" />
+                        <ellipse cx="155" cy="195" rx="12" ry="6" fill="#B45309" />
+
+                        <path d="M 35 110 Q 15 90 25 70" fill="none" stroke="#D97706" stroke-width="7" stroke-linecap="round"/>
+                        <path d="M 165 110 Q 185 90 175 70" fill="none" stroke="#D97706" stroke-width="7" stroke-linecap="round"/>
+                        <circle cx="25" cy="68" r="8" fill="#F59E0B" />
+                        <circle cx="175" cy="68" r="8" fill="#F59E0B" />
+
+                        <path d="M 50 40 L 35 25" stroke="#B45309" stroke-width="6" stroke-linecap="round"/>
+                        <path d="M 150 40 L 165 25" stroke="#B45309" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="32" cy="22" r="14" fill="#F59E0B" stroke="#B45309" stroke-width="3"/>
+                        <circle cx="168" cy="22" r="14" fill="#F59E0B" stroke="#B45309" stroke-width="3"/>
+
+                        <circle cx="100" cy="110" r="75" fill="#FBBF24" stroke="#B45309" stroke-width="8"/>
+                        <circle cx="100" cy="110" r="62" fill="#FFFBEB" stroke="#F59E0B" stroke-width="4"/>
+
+                        <ellipse cx="80" cy="90" rx="7" ry="10" fill="#1E293B"/>
+                        <ellipse cx="120" cy="90" rx="7" ry="10" fill="#1E293B"/>
+                        <circle cx="78" cy="87" r="3" fill="#FFFFFF"/>
+                        <circle cx="118" cy="87" r="3" fill="#FFFFFF"/>
+                        <circle cx="68" cy="105" r="7" fill="#F43F5E" opacity="0.5"/>
+                        <circle cx="132" cy="105" r="7" fill="#F43F5E" opacity="0.5"/>
+                        <path d="M 80 115 Q 100 135 120 115" fill="none" stroke="#1E293B" stroke-width="4" stroke-linecap="round"/>
+
+                        <line x1="100" y1="110" x2="100" y2="75" stroke="#E11D48" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="100" y1="110" x2="125" y2="110" stroke="#0284C7" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="100" cy="110" r="5" fill="#1E293B"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- PLAY BUTTON -->
+            <div class="w-full space-y-3 mb-4">
+                <button id="btn-start" class="w-full btn-orange-3d py-4 rounded-2xl flex flex-col items-center justify-center border-2 border-amber-200/60 group">
+                    <div class="flex items-center space-x-3 text-white text-3xl font-black tracking-wider text-stroke-blue font-title">
+                        <span>PLAY NOW</span>
+                        <i class="fa-solid fa-play text-2xl text-yellow-300 group-hover:scale-125 transition-transform"></i>
+                    </div>
+                    <span class="text-amber-100 text-xs font-semibold tracking-wide mt-0.5">Clock Challenges & Word Matching (B1 - C2)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== CLOCK GAMEPLAY SCREEN ==================== -->
+        <div id="screen-game-clock" class="relative z-10 flex-1 flex flex-col justify-between p-4 hidden">
+            <!-- Header Bar -->
+            <div class="flex justify-between items-center bg-white/80 backdrop-blur-md p-3 rounded-2xl border-2 border-white shadow-md">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-clock text-amber-600 text-xl"></i>
+                    <div id="timer-display-clock" class="text-2xl font-black text-slate-800 tracking-tight font-title">30s</div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold text-slate-700">STREAK:</span>
+                    <span id="streak-display-clock" class="bg-amber-500 text-white font-black px-3 py-1 rounded-full text-base shadow">0 🔥</span>
+                </div>
+            </div>
+
+            <!-- Question Box -->
+            <div class="mt-2 bg-gradient-to-b from-amber-400 to-amber-500 p-1 rounded-3xl shadow-xl border-2 border-amber-200">
+                <div class="bg-slate-900/90 rounded-[22px] p-3 text-center border border-amber-300/30">
+                    <span id="animal-theme-label" class="text-amber-300 text-xs font-bold uppercase tracking-widest block mb-0.5">🦁 Lion Clock Challenge</span>
+                    <h2 id="question-text" class="text-lg md:text-xl font-black text-white tracking-wide leading-snug">
+                        "Set the clock to twenty-five past four"
+                    </h2>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE CLOCK CONTAINER + LEFT & RIGHT CONTROLS (ĐÃ DỊCH LÊN VÀ PHÓNG TO VỪA TẦM MẮT) -->
+            <div class="relative w-full max-w-[390px] mx-auto my-auto -translate-y-3 flex items-center justify-between px-1">
+                
+                <!-- NÚT ĐIỀU KHIỂN KIM GIỜ (Bên trái) -->
+                <div class="flex flex-col items-center justify-center space-y-2 z-20 w-12 shrink-0">
+                    <span class="text-[10px] font-black text-sky-200 uppercase tracking-wider bg-sky-900/90 px-1 py-0.5 rounded border border-sky-400 shadow text-center w-full">HOUR</span>
+                    <button id="btn-hour-up" class="w-12 h-12 bg-gradient-to-b from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 active:scale-95 text-white font-black rounded-2xl shadow-lg border-2 border-white flex items-center justify-center text-lg transition-transform">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                    <button id="btn-hour-down" class="w-12 h-12 bg-gradient-to-b from-sky-400 to-sky-600 hover:from-sky-500 hover:to-sky-700 active:scale-95 text-white font-black rounded-2xl shadow-lg border-2 border-white flex items-center justify-center text-lg transition-transform">
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                </div>
+
+                <!-- ĐỒNG HỒ TƯƠNG TÁC (Đã tăng kích thước vừa mắt điện thoại) -->
+                <div class="relative w-[265px] h-[265px] sm:w-[285px] sm:h-[285px] flex items-center justify-center shrink-0 mx-auto">
+                    <svg id="interactive-clock" class="w-full h-full drop-shadow-2xl touch-none select-none overflow-visible" viewBox="0 0 200 200">
+                        <g id="clock-animal-container"></g>
+
+                        <g font-size="13" font-weight="900" fill="#1E293B" text-anchor="middle" dominant-baseline="central">
+                            <text x="100" y="32">12</text>
+                            <text x="136" y="42">1</text>
+                            <text x="160" y="66">2</text>
+                            <text x="168" y="100">3</text>
+                            <text x="160" y="134">4</text>
+                            <text x="136" y="158">5</text>
+                            <text x="100" y="168">6</text>
+                            <text x="64" y="158">7</text>
+                            <text x="40" y="134">8</text>
+                            <text x="32" y="100">9</text>
+                            <text x="40" y="66">10</text>
+                            <text x="64" y="42">11</text>
+                        </g>
+
+                        <g id="ghost-hands" class="hidden">
+                            <line id="ghost-hour" x1="100" y1="100" x2="100" y2="55" stroke="#9333EA" stroke-width="8" stroke-linecap="round" stroke-dasharray="5 3"/>
+                            <line id="ghost-minute" x1="100" y1="100" x2="100" y2="30" stroke="#DB2777" stroke-width="6" stroke-linecap="round" stroke-dasharray="5 3"/>
+                        </g>
+
+                        <line id="hand-hour" class="clock-hand" x1="100" y1="100" x2="100" y2="60" stroke="#0284C7" stroke-width="8" stroke-linecap="round"/>
+                        <line id="hand-minute" class="clock-hand" x1="100" y1="100" x2="100" y2="35" stroke="#E11D48" stroke-width="6" stroke-linecap="round"/>
+
+                        <circle cx="100" cy="100" r="7" fill="#1E293B" stroke="#FFFFFF" stroke-width="2"/>
+                    </svg>
+                </div>
+
+                <!-- NÚT ĐIỀU KHIỂN KIM PHÚT (Bên phải) -->
+                <div class="flex flex-col items-center justify-center space-y-2 z-20 w-12 shrink-0">
+                    <span class="text-[10px] font-black text-rose-200 uppercase tracking-wider bg-rose-900/90 px-1 py-0.5 rounded border border-rose-400 shadow text-center w-full">MIN</span>
+                    <button id="btn-min-up" class="w-12 h-12 bg-gradient-to-b from-rose-400 to-rose-600 hover:from-rose-500 hover:to-rose-700 active:scale-95 text-white font-black rounded-2xl shadow-lg border-2 border-white flex items-center justify-center text-lg transition-transform">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                    <button id="btn-min-down" class="w-12 h-12 bg-gradient-to-b from-rose-400 to-rose-600 hover:from-rose-500 hover:to-rose-700 active:scale-95 text-white font-black rounded-2xl shadow-lg border-2 border-white flex items-center justify-center text-lg transition-transform">
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2 mb-2">
+                <button id="btn-check-clock" class="w-full btn-orange-3d py-3.5 rounded-2xl text-white font-black text-xl tracking-wider text-stroke-blue border border-amber-200/50 font-title">
+                    CHECK ANSWER
+                </button>
+                <button id="btn-back-home-1" class="w-full text-center text-slate-700 font-bold text-xs py-1 hover:underline">
+                    ← Back to Home
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== MATCH THE WORD GAMEPLAY SCREEN ==================== -->
+        <div id="screen-game-match" class="relative z-10 flex-1 flex flex-col justify-between p-3.5 hidden">
+            
+            <div class="flex justify-between items-center bg-white/80 backdrop-blur-md p-2.5 rounded-2xl border-2 border-white shadow-md">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-puzzle-piece text-indigo-600 text-xl"></i>
+                    <div class="text-xs font-black text-indigo-900 uppercase font-title">Word Matching (B1 - C2)</div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold text-slate-700">STREAK:</span>
+                    <span id="streak-display-match" class="bg-indigo-600 text-white font-black px-3 py-0.5 rounded-full text-sm shadow">0 🔥</span>
+                </div>
+            </div>
+
+            <!-- Prompt instructions -->
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-2.5 rounded-2xl text-center shadow-md text-white border border-indigo-300/40">
+                <span class="text-[11px] font-bold uppercase tracking-wider block text-indigo-200">Vocabulary Challenge (B1 - C2)</span>
+                <p class="text-xs font-semibold mt-0.5">Nối 3 từ Cột A với 3 ý nghĩa đúng ở Cột B (Chú ý: Cột B có 2 đáp án sai!)</p>
+            </div>
+
+            <!-- Two Columns for Matching (Cột A: 3 ô, Cột B: 5 ô) -->
+            <div id="match-container" class="relative grid grid-cols-2 gap-3 my-auto px-1">
+                <svg id="match-lines-svg" class="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible"></svg>
+
+                <!-- Column A: Vocabulary (3 ô) -->
+                <div class="flex flex-col z-20">
+                    <div class="text-center font-black text-[11px] text-slate-800 bg-amber-300 py-1.5 rounded-lg uppercase shadow border border-amber-400 mb-2 h-8 flex items-center justify-center">Cột A (Từ Vựng)</div>
+                    <div id="column-verbs" class="flex-1 flex flex-col justify-around py-1 space-y-2"></div>
+                </div>
+
+                <!-- Column B: Vietnamese Meanings (5 ô: 3 Đúng + 2 Sai) -->
+                <div class="flex flex-col z-20">
+                    <div class="text-center font-black text-[11px] text-slate-800 bg-amber-300 py-1.5 rounded-lg uppercase shadow border border-amber-400 mb-2 h-8 flex items-center justify-center">Cột B (Ý Nghĩa - 5 Ô)</div>
+                    <div id="column-meanings" class="space-y-1.5"></div>
+                </div>
+            </div>
+
+            <!-- Meaning Display Box -->
+            <div id="meaning-box" class="bg-slate-900/95 border-2 border-indigo-400 p-2.5 rounded-2xl text-center shadow-xl hidden">
+                <span class="text-[11px] font-bold text-indigo-300 block mb-0.5">✨ Successfully Matched:</span>
+                <p id="meaning-text" class="text-white font-black text-xs sm:text-sm leading-relaxed">put up with = chịu đựng kiên nhẫn</p>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="space-y-1.5">
+                <button id="btn-next-match" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 py-3 rounded-2xl text-white font-black text-lg tracking-wider shadow-lg font-title hidden">
+                    NEXT CHALLENGE →
+                </button>
+                <button id="btn-back-home-2" class="w-full text-center text-slate-700 font-bold text-xs py-1 hover:underline">
+                    ← Back to Home
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border-4 border-amber-400 transform transition-all scale-100">
+            <div id="modal-icon-container" class="w-16 h-16 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-inner">
+                <i id="modal-icon" class="fa-solid fa-star"></i>
+            </div>
+            <h3 id="modal-title" class="text-2xl font-black text-slate-800 mb-2 font-title">Awesome!</h3>
+            <p id="modal-message" class="text-slate-600 font-medium text-sm mb-6 leading-relaxed">You completed the challenge!</p>
+            <button id="modal-close-btn" class="w-full btn-orange-3d py-3 rounded-2xl text-white font-black text-lg tracking-wider font-title">
+                CONTINUE
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        let bgmInterval = null;
+        let isMuted = false;
+
+        const btnSoundToggle = document.getElementById('btn-sound-toggle');
+        const soundIcon = document.getElementById('sound-icon');
+
+        btnSoundToggle.addEventListener('click', () => {
+            isMuted = !isMuted;
+            if (isMuted) {
+                soundIcon.className = "fa-solid fa-volume-xmark text-sm";
+                if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+            } else {
+                soundIcon.className = "fa-solid fa-volume-high text-sm";
+                if (!audioCtx) initAudio();
+                else if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+        });
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+            if (!isMuted && audioCtx.state === 'suspended') audioCtx.resume();
+            startBGM();
+        }
+
+        function startBGM() {
+            if (bgmInterval) return;
+            const melodyNotes = [
+                { freq: 330.00, time: 0 },
+                { freq: 392.00, time: 0.25 },
+                { freq: 440.00, time: 0.5 },
+                { freq: 523.25, time: 0.75 },
+                { freq: 392.00, time: 1.25 },
+                { freq: 493.88, time: 1.5 },
+                { freq: 587.33, time: 1.75 },
+                { freq: 659.25, time: 2.0 },
+                { freq: 440.00, time: 2.5 },
+                { freq: 523.25, time: 2.75 },
+                { freq: 587.33, time: 3.0 },
+                { freq: 659.25, time: 3.25 },
+                { freq: 523.25, time: 3.75 },
+                { freq: 392.00, time: 4.0 },
+                { freq: 440.00, time: 4.25 },
+                { freq: 330.00, time: 4.5 }
+            ];
+
+            bgmInterval = setInterval(() => {
+                if (isMuted || !audioCtx || audioCtx.state !== 'running') return;
+                const now = audioCtx.currentTime;
+
+                melodyNotes.forEach(note => {
+                    try {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(note.freq, now + note.time);
+                        gain.gain.setValueAtTime(0.001, now + note.time);
+                        gain.gain.linearRampToValueAtTime(0.04, now + note.time + 0.04);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, now + note.time + 0.22);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + note.time);
+                        osc.stop(now + note.time + 0.25);
+                    } catch (e) {}
+                });
+            }, 5500);
+        }
+
+        function playSound(type) {
+            if (isMuted || !audioCtx || audioCtx.state !== 'running') return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'tick') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.start(now); osc.stop(now + 0.05);
+            } else if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                osc.start(now); osc.stop(now + 0.6);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.setValueAtTime(110, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            }
+        }
+
+        const modal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalIconContainer = document.getElementById('modal-icon-container');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        let modalCallback = null;
+
+        function showCustomModal(title, message, isSuccess, callback) {
+            modalTitle.innerText = title;
+            modalMessage.innerText = message;
+            modalCallback = callback || null;
+
+            if (isSuccess) {
+                modalIconContainer.className = "w-16 h-16 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-inner";
+                modalIcon.className = "fa-solid fa-check";
+                modalCloseBtn.className = "w-full bg-gradient-to-b from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 py-3 rounded-2xl text-white font-black text-lg tracking-wider shadow-lg font-title";
+            } else {
+                modalIconContainer.className = "w-16 h-16 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-inner";
+                modalIcon.className = "fa-solid fa-clock-rotate-left";
+                modalCloseBtn.className = "w-full bg-orange-500 hover:bg-orange-600 py-3 rounded-2xl text-white font-black text-lg tracking-wider shadow-lg font-title";
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        modalCloseBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            if (modalCallback) {
+                const cb = modalCallback;
+                modalCallback = null;
+                cb();
+            }
+        });
+
+        // Global State
+        let currentStreak = 0;
+        let globalRound = 1;
+        let currentLevel = 1;
+
+        // Clock State
+        let targetHour = 9;
+        let targetMinute = 15;
+        let userHourAngle = 0;
+        let userMinuteAngle = 0;
+        let timerInterval = null;
+        let timeLeft = 30;
+        let isDraggingHand = null;
+
+        // PHRASAL VERBS BANK B1 - C2
+        const phrasalBank = [
+            { id: 101, verb: "look after", meaning: "chăm sóc, trông nom", level: "B1" },
+            { id: 102, verb: "give up", meaning: "từ bỏ, bỏ cuộc", level: "B1" },
+            { id: 103, verb: "find out", meaning: "tìm ra, phát hiện", level: "B1" },
+            { id: 104, verb: "take off", meaning: "cất cánh, cởi ra", level: "B1" },
+            { id: 105, verb: "turn down", meaning: "từ chối, vặn nhỏ", level: "B1" },
+            { id: 106, verb: "carry on", meaning: "tiếp tục thực hiện", level: "B1" },
+            { id: 107, verb: "break down", meaning: "bị hỏng, suy sụp", level: "B1" },
+            { id: 108, verb: "run out of", meaning: "hết, cạn kiệt", level: "B1" },
+            { id: 109, verb: "put off", meaning: "hoãn lại, trì hoãn", level: "B1" },
+            { id: 110, verb: "set up", meaning: "thành lập, thiết lập", level: "B1" },
+
+            { id: 201, verb: "come across", meaning: "tình cờ gặp, phát hiện", level: "B2" },
+            { id: 202, verb: "bring about", meaning: "dẫn đến, gây ra", level: "B2" },
+            { id: 203, verb: "catch up with", meaning: "bắt kịp, theo kịp", level: "B2" },
+            { id: 204, verb: "get along with", meaning: "hòa thuận với ai", level: "B2" },
+            { id: 205, verb: "look forward to", meaning: "trông chờ, mong đợi", level: "B2" },
+            { id: 206, verb: "cut down on", meaning: "cắt giảm tiêu dùng", level: "B2" },
+            { id: 207, verb: "make up for", meaning: "bù đắp, đền bù", level: "B2" },
+            { id: 208, verb: "take part in", meaning: "tham gia vào", level: "B2" },
+            { id: 209, verb: "keep up with", meaning: "giữ nhịp, theo kịp", level: "B2" },
+            { id: 210, verb: "work out", meaning: "rèn luyện, tìm ra cách", level: "B2" },
+
+            { id: 301, verb: "call for", meaning: "đòi hỏi, yêu cầu", level: "C1" },
+            { id: 302, verb: "narrow down", meaning: "thu hẹp lựa chọn", level: "C1" },
+            { id: 303, verb: "brush up on", meaning: "ôn lại, trau dồi kiến thức", level: "C1" },
+            { id: 304, verb: "face up to", meaning: "dũng cảm đối mặt", level: "C1" },
+            { id: 305, verb: "fall back on", meaning: "trông cậy vào dự phòng", level: "C1" },
+            { id: 306, verb: "lay off", meaning: "sa thải nhân viên", level: "C1" },
+            { id: 307, verb: "wear off", meaning: "mất dần tác dụng", level: "C1" },
+            { id: 308, verb: "single out", meaning: "chọn ra, tách riêng", level: "C1" },
+            { id: 309, verb: "spring from", meaning: "bắt nguồn từ", level: "C1" },
+            { id: 310, verb: "count on", meaning: "tin tưởng, dựa vào", level: "C1" },
+
+            { id: 401, verb: "put up with", meaning: "chịu đựng kiên nhẫn", level: "C2" },
+            { id: 402, verb: "call off", meaning: "hủy bỏ sự kiện", level: "C2" },
+            { id: 403, verb: "knuckle down", meaning: "tập trung làm việc", level: "C2" },
+            { id: 404, verb: "iron out", meaning: "giải quyết bất đồng", level: "C2" },
+            { id: 405, verb: "gloss over", meaning: "che đậy sai sót", level: "C2" },
+            { id: 406, verb: "phase out", meaning: "loại bỏ dần dần", level: "C2" },
+            { id: 407, verb: "clamp down", meaning: "trấn áp, siết chặt", level: "C2" },
+            { id: 408, verb: "draw up", meaning: "soạn thảo hợp đồng", level: "C2" },
+            { id: 409, verb: "fend off", meaning: "đẩy lùi, né tránh", level: "C2" },
+            { id: 410, verb: "peter out", meaning: "giảm dần rồi biến mất", level: "C2" }
+        ];
+
+        let vocabularyPool = [];
+
+        function getNextMatchPairs(count = 3) {
+            if (vocabularyPool.length < count) {
+                let b1 = phrasalBank.filter(x => x.level === 'B1').sort(() => 0.5 - Math.random());
+                let b2 = phrasalBank.filter(x => x.level === 'B2').sort(() => 0.5 - Math.random());
+                let c1 = phrasalBank.filter(x => x.level === 'C1').sort(() => 0.5 - Math.random());
+                let c2 = phrasalBank.filter(x => x.level === 'C2').sort(() => 0.5 - Math.random());
+
+                vocabularyPool = [];
+                const maxLen = Math.max(b1.length, b2.length, c1.length, c2.length);
+                for (let i = 0; i < maxLen; i++) {
+                    if (b1[i]) vocabularyPool.push(b1[i]);
+                    if (b2[i]) vocabularyPool.push(b2[i]);
+                    if (c1[i]) vocabularyPool.push(c1[i]);
+                    if (c2[i]) vocabularyPool.push(c2[i]);
+                }
+            }
+            return vocabularyPool.splice(0, count);
+        }
+
+        let currentMatchPairs = [];
+        let distractorMeanings = [];
+        let selectedVerbCard = null;
+        let matchedCount = 0;
+
+        const screenHome = document.getElementById('screen-home');
+        const screenGameClock = document.getElementById('screen-game-clock');
+        const screenGameMatch = document.getElementById('screen-game-match');
+        
+        const btnStart = document.getElementById('btn-start');
+        const btnBackHome1 = document.getElementById('btn-back-home-1');
+        const btnBackHome2 = document.getElementById('btn-back-home-2');
+
+        const btnCheckClock = document.getElementById('btn-check-clock');
+        const questionText = document.getElementById('question-text');
+        const timerDisplayClock = document.getElementById('timer-display-clock');
+        const streakDisplayClock = document.getElementById('streak-display-clock');
+        const animalThemeLabel = document.getElementById('animal-theme-label');
+        const clockAnimalContainer = document.getElementById('clock-animal-container');
+        const handHour = document.getElementById('hand-hour');
+        const handMinute = document.getElementById('hand-minute');
+        const ghostHands = document.getElementById('ghost-hands');
+        const ghostHour = document.getElementById('ghost-hour');
+        const ghostMinute = document.getElementById('ghost-minute');
+        const clockSvg = document.getElementById('interactive-clock');
+
+        const btnHourUp = document.getElementById('btn-hour-up');
+        const btnHourDown = document.getElementById('btn-hour-down');
+        const btnMinUp = document.getElementById('btn-min-up');
+        const btnMinDown = document.getElementById('btn-min-down');
+
+        const columnVerbs = document.getElementById('column-verbs');
+        const columnMeanings = document.getElementById('column-meanings');
+        const streakDisplayMatch = document.getElementById('streak-display-match');
+        const meaningBox = document.getElementById('meaning-box');
+        const meaningText = document.getElementById('meaning-text');
+        const btnNextMatch = document.getElementById('btn-next-match');
+        const matchLinesSvg = document.getElementById('match-lines-svg');
+        const matchContainer = document.getElementById('match-container');
+
+        const animalThemes = [
+            {
+                name: "🦁 Lion Clock",
+                rim: "#F59E0B",
+                stroke: "#B45309",
+                inner: "#FFFBEB",
+                ears: `<circle cx="38" cy="42" r="28" fill="#D97706" stroke="#B45309" stroke-width="5"/><circle cx="38" cy="42" r="16" fill="#FDE68A"/><circle cx="162" cy="42" r="28" fill="#D97706" stroke="#B45309" stroke-width="5"/><circle cx="162" cy="42" r="16" fill="#FDE68A"/>`,
+                faceDecor: `<ellipse cx="75" cy="85" rx="7" ry="9" fill="#1E293B"/><circle cx="73" cy="83" r="2.5" fill="#FFFFFF"/><ellipse cx="125" cy="85" rx="7" ry="9" fill="#1E293B"/><circle cx="123" cy="83" r="2.5" fill="#FFFFFF"/><ellipse cx="65" cy="98" rx="8" ry="5" fill="#F43F5E" opacity="0.4"/><ellipse cx="135" cy="98" rx="8" ry="5" fill="#F43F5E" opacity="0.4"/><path d="M 94 96 Q 100 102 106 96 Q 100 108 94 96 Z" fill="#B45309"/><line x1="100" y1="102" x2="100" y2="110" stroke="#B45309" stroke-width="3" stroke-linecap="round"/>`
+            },
+            {
+                name: "🐼 Panda Clock",
+                rim: "#334155",
+                stroke: "#0F172A",
+                inner: "#F8FAFC",
+                ears: `<circle cx="42" cy="38" r="26" fill="#0F172A"/><circle cx="158" cy="38" r="26" fill="#0F172A"/>`,
+                faceDecor: `<ellipse cx="75" cy="85" rx="14" ry="11" fill="#0F172A" transform="rotate(-15 75 85)"/><circle cx="75" cy="85" r="6" fill="#FFFFFF"/><circle cx="76" cy="85" r="3" fill="#0F172A"/><ellipse cx="125" cy="85" rx="14" ry="11" fill="#0F172A" transform="rotate(15 125 85)"/><circle cx="125" cy="85" r="6" fill="#FFFFFF"/><circle cx="124" cy="85" r="3" fill="#0F172A"/><ellipse cx="65" cy="100" rx="7" ry="4" fill="#FDA4AF" opacity="0.5"/><ellipse cx="135" cy="100" rx="7" ry="4" fill="#FDA4AF" opacity="0.5"/><ellipse cx="100" cy="96" rx="7" ry="5" fill="#0F172A"/>`
+            },
+            {
+                name: "🐸 Frog Clock",
+                rim: "#10B981",
+                stroke: "#047857",
+                inner: "#ECFDF5",
+                ears: `<circle cx="58" cy="32" r="22" fill="#10B981" stroke="#047857" stroke-width="5"/><circle cx="58" cy="32" r="10" fill="#FFFFFF"/><circle cx="58" cy="32" r="4" fill="#0F172A"/><circle cx="142" cy="32" r="22" fill="#10B981" stroke="#047857" stroke-width="5"/><circle cx="142" cy="32" r="10" fill="#FFFFFF"/><circle cx="142" cy="32" r="4" fill="#0F172A"/>`,
+                faceDecor: `<circle cx="60" cy="100" r="8" fill="#34D399" opacity="0.6"/><circle cx="140" cy="100" r="8" fill="#34D399" opacity="0.6"/><path d="M 75 92 Q 100 114 125 92" fill="none" stroke="#047857" stroke-width="4" stroke-linecap="round"/>`
+            }
+        ];
+
+        function updateAnimalTheme() {
+            const themeIndex = Math.floor((currentLevel - 1) / 3) % animalThemes.length;
+            const theme = animalThemes[themeIndex];
+            animalThemeLabel.innerText = `${theme.name} (Level ${currentLevel})`;
+            
+            clockAnimalContainer.innerHTML = `
+                ${theme.ears}
+                <circle cx="100" cy="100" r="80" fill="${theme.rim}" stroke="${theme.stroke}" stroke-width="6"/>
+                <circle cx="100" cy="100" r="70" fill="${theme.inner}" stroke="${theme.rim}" stroke-width="3"/>
+                ${theme.faceDecor}
+            `;
+        }
+
+        btnStart.addEventListener('click', () => {
+            initAudio();
+            screenHome.classList.add('hidden');
+            currentLevel = 1;
+            globalRound = 1;
+            startRound();
+        });
+
+        function returnHome() {
+            clearInterval(timerInterval);
+            screenGameClock.classList.add('hidden');
+            screenGameMatch.classList.add('hidden');
+            screenHome.classList.remove('hidden');
+        }
+
+        btnBackHome1.addEventListener('click', returnHome);
+        btnBackHome2.addEventListener('click', returnHome);
+
+        function startRound() {
+            document.getElementById('display-level').innerText = currentLevel;
+            document.getElementById('display-level-num').innerText = currentLevel;
+
+            if (globalRound % 2 !== 0) {
+                screenGameMatch.classList.add('hidden');
+                screenGameClock.classList.remove('hidden');
+                updateAnimalTheme();
+                startClockQuestion();
+            } else {
+                screenGameClock.classList.add('hidden');
+                screenGameMatch.classList.remove('hidden');
+                startMatchQuestion();
+            }
+        }
+
+        // CLOCK GAMEPLAY LOGIC
+        function generateClockQuestion() {
+            let h = Math.floor(Math.random() * 12) + 1;
+            let m = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55][Math.floor(Math.random() * 11)];
+
+            targetHour = h;
+            targetMinute = m;
+
+            let phrase = "";
+            const nextH = h % 12 + 1;
+
+            if (m === 15) phrase = `a quarter past ${h}`;
+            else if (m === 30) phrase = `half past ${h}`;
+            else if (m === 45) phrase = `a quarter to ${nextH}`;
+            else if (m < 30) phrase = `${m} minutes past ${h}`;
+            else phrase = `${60 - m} minutes to ${nextH}`;
+
+            questionText.innerText = `"Set the clock to ${phrase}"`;
+        }
+
+        function startClockQuestion() {
+            ghostHands.classList.add('hidden');
+            generateClockQuestion();
+            
+            userMinuteAngle = Math.floor(Math.random() * 12) * 30;
+            userHourAngle = Math.floor(Math.random() * 12) * 30;
+            updateClockHandsDisplay();
+
+            clearInterval(timerInterval);
+            timeLeft = 30;
+            timerDisplayClock.innerText = `${timeLeft}s`;
+            timerDisplayClock.classList.remove('text-red-500', 'animate-pulse');
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplayClock.innerText = `${timeLeft}s`;
+
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    timerDisplayClock.classList.add('text-red-500', 'animate-pulse');
+                    playSound('tick');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleClockAnswer(false, true);
+                }
+            }, 1000);
+        }
+
+        function getAngleFromEvent(e) {
+            const rect = clockSvg.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            let rad = Math.atan2(clientY - centerY, clientX - centerX);
+            let deg = rad * (180 / Math.PI) + 90;
+            if (deg < 0) deg += 360;
+            return deg;
+        }
+
+        function getClosestAngle(currentAngle, newDeg) {
+            let normalizedCurrent = ((currentAngle % 360) + 360) % 360;
+            let diff = newDeg - normalizedCurrent;
+            if (diff > 180) diff -= 360;
+            if (diff < -180) diff += 360;
+            return currentAngle + diff;
+        }
+
+        function handlePointerDown(e) {
+            const angle = getAngleFromEvent(e);
+            let normMin = ((userMinuteAngle % 360) + 360) % 360;
+            let normHr = ((userHourAngle % 360) + 360) % 360;
+
+            const diffMin = Math.abs((angle - normMin + 540) % 360 - 180);
+            const diffHour = Math.abs((angle - normHr + 540) % 360 - 180);
+
+            isDraggingHand = (diffMin < diffHour) ? 'minute' : 'hour';
+
+            handHour.classList.add('no-transition');
+            handMinute.classList.add('no-transition');
+
+            handlePointerMove(e);
+        }
+
+        function handlePointerMove(e) {
+            if (!isDraggingHand) return;
+            e.preventDefault();
+            let deg = getAngleFromEvent(e);
+            let snap = Math.round(deg / 30) * 30;
+            let snapDeg = ((snap % 360) + 360) % 360;
+
+            if (isDraggingHand === 'minute') {
+                userMinuteAngle = getClosestAngle(userMinuteAngle, snapDeg);
+            } else {
+                userHourAngle = getClosestAngle(userHourAngle, snapDeg);
+            }
+            updateClockHandsDisplay();
+        }
+
+        function handlePointerUp() { 
+            isDraggingHand = null; 
+            handHour.classList.remove('no-transition');
+            handMinute.classList.remove('no-transition');
+        }
+
+        clockSvg.addEventListener('mousedown', handlePointerDown);
+        window.addEventListener('mousemove', handlePointerMove);
+        window.addEventListener('mouseup', handlePointerUp);
+        clockSvg.addEventListener('touchstart', handlePointerDown);
+        window.addEventListener('touchmove', handlePointerMove, { passive: false });
+        window.addEventListener('touchend', handlePointerUp);
+
+        btnHourUp.addEventListener('click', () => {
+            userHourAngle += 30;
+            updateClockHandsDisplay();
+            playSound('tick');
+        });
+
+        btnHourDown.addEventListener('click', () => {
+            userHourAngle -= 30;
+            updateClockHandsDisplay();
+            playSound('tick');
+        });
+
+        btnMinUp.addEventListener('click', () => {
+            userMinuteAngle += 30;
+            updateClockHandsDisplay();
+            playSound('tick');
+        });
+
+        btnMinDown.addEventListener('click', () => {
+            userMinuteAngle -= 30;
+            updateClockHandsDisplay();
+            playSound('tick');
+        });
+
+        function updateClockHandsDisplay() {
+            handMinute.style.transform = `rotate(${userMinuteAngle}deg)`;
+            handHour.style.transform = `rotate(${userHourAngle}deg)`;
+        }
+
+        btnCheckClock.addEventListener('click', () => {
+            clearInterval(timerInterval);
+
+            let normMinAngle = ((userMinuteAngle % 360) + 360) % 360;
+            let normHourAngle = ((userHourAngle % 360) + 360) % 360;
+
+            let userMin = Math.round(normMinAngle / 6);
+            if (userMin === 60) userMin = 0;
+            let userHr = Math.round(normHourAngle / 30);
+            if (userHr === 0) userHr = 12;
+
+            const isCorrect = (userHr === targetHour) && (userMin === targetMinute);
+            handleClockAnswer(isCorrect, false);
+        });
+
+        function handleClockAnswer(isCorrect, isTimeout) {
+            streakDisplayClock.innerText = `${currentStreak} 🔥`;
+            streakDisplayMatch.innerText = `${currentStreak} 🔥`;
+
+            if (isCorrect) {
+                playSound('correct');
+                currentStreak++;
+                currentLevel++;
+                globalRound++;
+
+                showCustomModal("🎉 CORRECT!", "You set the clock perfectly!", true, () => {
+                    startRound();
+                });
+            } else {
+                playSound('wrong');
+                currentStreak = 0;
+                ghostMinute.setAttribute('transform', `rotate(${targetMinute * 6} 100 100)`);
+                ghostHour.setAttribute('transform', `rotate(${(targetHour % 12) * 30 + (targetMinute / 60) * 30} 100 100)`);
+                ghostHands.classList.remove('hidden');
+
+                showCustomModal("NOT QUITE!", `The correct time was ${targetHour}:${targetMinute < 10 ? '0' + targetMinute : targetMinute}.`, false, () => {
+                    startRound();
+                });
+            }
+        }
+
+        // MATCH THE WORD GAME LOGIC
+        function getLevelBadgeStyle(level) {
+            switch(level) {
+                case 'B1': return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                case 'B2': return 'bg-blue-100 text-blue-800 border-blue-300';
+                case 'C1': return 'bg-amber-100 text-amber-800 border-amber-300';
+                case 'C2': return 'bg-purple-100 text-purple-800 border-purple-300';
+                default: return 'bg-slate-100 text-slate-800 border-slate-300';
+            }
+        }
+
+        function startMatchQuestion() {
+            selectedVerbCard = null;
+            matchedCount = 0;
+            matchLinesSvg.innerHTML = '';
+            meaningBox.classList.add('hidden');
+            btnNextMatch.classList.add('hidden');
+
+            currentMatchPairs = getNextMatchPairs(3);
+
+            const currentIds = new Set(currentMatchPairs.map(item => item.id));
+            const availableDistractors = phrasalBank.filter(item => !currentIds.has(item.id));
+            distractorMeanings = [...availableDistractors].sort(() => 0.5 - Math.random()).slice(0, 2);
+
+            renderMatchColumns();
+        }
+
+        function renderMatchColumns() {
+            columnVerbs.innerHTML = '';
+            columnMeanings.innerHTML = '';
+
+            const verbsList = [...currentMatchPairs].sort(() => 0.5 - Math.random());
+            const meaningsList = [...currentMatchPairs, ...distractorMeanings].sort(() => 0.5 - Math.random());
+
+            verbsList.forEach(item => {
+                const div = document.createElement('div');
+                const badgeStyle = getLevelBadgeStyle(item.level);
+                div.className = "match-node bg-white border-2 border-slate-200 rounded-xl px-2.5 py-2 text-center font-bold text-slate-800 shadow cursor-pointer hover:bg-amber-50 hover:border-amber-400 flex items-center justify-between text-xs sm:text-sm h-[52px] shrink-0";
+                div.dataset.id = item.id;
+                div.dataset.type = "verb";
+                div.innerHTML = `<span class="truncate mr-1">${item.verb}</span> <span class="text-[10px] font-black px-1.5 py-0.5 rounded border shrink-0 ${badgeStyle}">${item.level}</span>`;
+                div.addEventListener('click', () => selectVerbNode(div, item));
+                columnVerbs.appendChild(div);
+            });
+
+            meaningsList.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "match-node bg-white border-2 border-slate-200 rounded-xl px-2 py-1.5 text-center font-medium text-slate-800 shadow cursor-pointer hover:bg-amber-50 hover:border-amber-400 flex items-center justify-center text-[11px] sm:text-xs leading-tight h-[52px] shrink-0";
+                div.dataset.id = item.id;
+                div.dataset.type = "meaning";
+                div.innerText = item.meaning;
+                div.addEventListener('click', () => selectMeaningNode(div, item));
+                columnMeanings.appendChild(div);
+            });
+        }
+
+        function selectVerbNode(el, item) {
+            if (el.classList.contains('opacity-40')) return;
+            document.querySelectorAll('#column-verbs > div').forEach(d => d.classList.remove('bg-indigo-100', 'border-indigo-600', 'ring-2'));
+            el.classList.add('bg-indigo-100', 'border-indigo-600', 'ring-2');
+            selectedVerbCard = { el, item };
+        }
+
+        function selectMeaningNode(el, item) {
+            if (el.classList.contains('opacity-40')) return;
+            if (!selectedVerbCard) {
+                playSound('wrong');
+                return;
+            }
+
+            const verbEl = selectedVerbCard.el;
+            const verbItem = selectedVerbCard.item;
+
+            if (verbItem.id === item.id) {
+                playSound('correct');
+                currentStreak++;
+                streakDisplayMatch.innerText = `${currentStreak} 🔥`;
+                streakDisplayClock.innerText = `${currentStreak} 🔥`;
+
+                verbEl.className = "match-node bg-emerald-100 border-2 border-emerald-500 rounded-xl px-2.5 py-2 text-center font-bold text-emerald-900 shadow opacity-40 pointer-events-none flex items-center justify-between text-xs sm:text-sm h-[52px] shrink-0";
+                el.className = "match-node bg-emerald-100 border-2 border-emerald-500 rounded-xl px-2 py-1.5 text-center font-semibold text-emerald-900 shadow opacity-40 pointer-events-none flex items-center justify-center text-[11px] sm:text-xs leading-tight h-[52px] shrink-0";
+
+                drawConnectionLine(verbEl, el);
+
+                meaningText.innerText = `"${verbItem.verb}" [${verbItem.level}] = ${verbItem.meaning}`;
+                meaningBox.classList.remove('hidden');
+
+                matchedCount++;
+                selectedVerbCard = null;
+
+                if (matchedCount === currentMatchPairs.length) {
+                    btnNextMatch.classList.remove('hidden');
+                }
+            } else {
+                playSound('wrong');
+                verbEl.classList.remove('bg-indigo-100', 'border-indigo-600', 'ring-2');
+                el.classList.add('bg-red-100', 'border-red-400');
+                setTimeout(() => el.classList.remove('bg-red-100', 'border-red-400'), 400);
+                selectedVerbCard = null;
+            }
+        }
+
+        function drawConnectionLine(el1, el2) {
+            const containerRect = matchContainer.getBoundingClientRect();
+            const rect1 = el1.getBoundingClientRect();
+            const rect2 = el2.getBoundingClientRect();
+
+            const x1 = rect1.right - containerRect.left;
+            const y1 = rect1.top + rect1.height / 2 - containerRect.top;
+            const x2 = rect2.left - containerRect.left;
+            const y2 = rect2.top + rect2.height / 2 - containerRect.top;
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.setAttribute('stroke', '#10B981');
+            line.setAttribute('stroke-width', '4');
+            line.setAttribute('stroke-linecap', 'round');
+            matchLinesSvg.appendChild(line);
+        }
+
+        btnNextMatch.addEventListener('click', () => {
+            currentLevel++;
+            globalRound++;
+            startRound();
+        });
+    </script>
+</body>
+</html>
